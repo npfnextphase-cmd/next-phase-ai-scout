@@ -1,6 +1,60 @@
 import React, { useState } from "react";
 
 export default function App() {
+  const playerNameOptions = [
+    "Ayob Hussain",
+    "Lincon Newall",
+    "Ali Alhasnawi",
+    "Jacob Rae",
+    "Joe Danby",
+    "Amir Melouli",
+    "Fawaz Mahmoud",
+    "Jayden Andrew Toussi",
+    "Joseph Adelowo",
+    "Anis Benoussaid",
+    "Adnan Benfaddoul Zine",
+    "Tiago Paz",
+    "Ridwan Ali",
+    "Prealey Iyobor Andrew",
+    "Richie Kalongo",
+    "Benjamin Ghanei",
+    "Callum Sessman",
+    "Younis Salar",
+    "Marwane Redjdal",
+    "Yusef Nader",
+    "Brendan Nimako",
+    "Youssef Mohamed",
+    "Ibrahim Makdah",
+    "Mohamed Gheris",
+    "Tafara Machiridza",
+    "Ikechukwu Reyes",
+    "Abdoul Guebre",
+    "Mohamed Toure",
+    "Mohammed Mahamoud",
+    "Anis Ben Hamed",
+    "Fahed Almahmoud",
+    "Igor Olechowski",
+    "Joise Fernandes",
+    "Jesse Jones",
+    "Isaac Adelaja",
+    "Ibra",
+    "Will Still",
+    "Musta",
+    "Harrison Egwe",
+  ];
+
+  const ageGroupOptions = [
+    "U13",
+    "U14",
+    "U15",
+    "U16",
+    "U17",
+    "U18",
+    "U19",
+    "U20",
+    "U21",
+  ];
+
   const defaultAssessment = {
     technical: 7,
     physical: 7,
@@ -25,23 +79,25 @@ export default function App() {
   const [players, setPlayers] = useState([
     {
       id: 1,
-      name: "Emmanuel A",
-      age: "15",
-      position: "CAM",
+      name: "Ayob Hussain",
+      age: "U17",
+      position: "GK",
       club: "AR Elite",
-      rating: 8,
-      notes:
-        "Strong dribbling ability, confident on the ball and can create chances in attacking areas.",
+      kitColour: "Orange",
+      kitNumber: "1",
+      rating: 0,
+      notes: "No assessment completed yet.",
     },
     {
       id: 2,
-      name: "Jayden M",
-      age: "14",
-      position: "ST",
-      club: "AR Elite U14",
-      rating: 7,
-      notes:
-        "Good movement as a striker and works hard off the ball. Needs to improve finishing consistency.",
+      name: "Lincon Newall",
+      age: "U17",
+      position: "CB",
+      club: "AR Elite",
+      kitColour: "Yellow",
+      kitNumber: "2",
+      rating: 0,
+      notes: "No assessment completed yet.",
     },
   ]);
 
@@ -52,6 +108,8 @@ export default function App() {
     age: "",
     position: "",
     club: "",
+    kitColour: "",
+    kitNumber: "",
   });
 
   const [assessment, setAssessment] = useState(defaultAssessment);
@@ -80,9 +138,21 @@ export default function App() {
     { key: "decisionMaking", label: "Decision Making" },
   ];
 
+  function getKitBackground(colour) {
+    if (colour === "Orange") return "#ff7a00";
+    if (colour === "Yellow") return "#ffd60a";
+    if (colour === "Green") return "#00a651";
+    return "#555";
+  }
+
+  function getKitTextColour(colour) {
+    if (colour === "Yellow") return "#000000";
+    return "#ffffff";
+  }
+
   function addPlayer() {
     if (!newPlayer.name || !newPlayer.age || !newPlayer.position) {
-      alert("Please add player name, age and position.");
+      alert("Please add player name, age group and position.");
       return;
     }
 
@@ -92,18 +162,24 @@ export default function App() {
       age: newPlayer.age,
       position: newPlayer.position,
       club: newPlayer.club || "Not added",
+      kitColour: newPlayer.kitColour || "Not selected",
+      kitNumber: newPlayer.kitNumber || "Not selected",
       rating: 0,
       notes: "No assessment completed yet.",
     };
 
     setPlayers([player, ...players]);
     setSelectedPlayer(player);
+
     setNewPlayer({
       name: "",
       age: "",
       position: "",
       club: "",
+      kitColour: "",
+      kitNumber: "",
     });
+
     setAssessment(defaultAssessment);
     setReport("");
   }
@@ -162,10 +238,14 @@ Based on the rating of ${average.toFixed(
     const finalReport = `
 NEXT PHASE FOOTBALL PLAYER REPORT
 
+PLAYER DETAILS
+
 Player Name: ${activePlayer.name}
-Age: ${activePlayer.age}
+Age Group: ${activePlayer.age}
 Position: ${activePlayer.position}
 Current Club: ${activePlayer.club}
+Kit Colour: ${activePlayer.kitColour || "Not selected"}
+Kit Number: ${activePlayer.kitNumber || "Not selected"}
 
 Overall Score: ${average.toFixed(1)}/10
 
@@ -196,7 +276,7 @@ ${professionalScoutNotes}
 
 AI SUMMARY
 
-${activePlayer.name} is a ${activePlayer.age}-year-old ${activePlayer.position}. Based on the assessment, the player has achieved an overall score of ${average.toFixed(
+${activePlayer.name} is a ${activePlayer.age} player who plays as a ${activePlayer.position}. Based on the assessment, the player has achieved an overall score of ${average.toFixed(
       1
     )}/10.
 
@@ -233,21 +313,21 @@ DEVELOPMENT PLAN
       alert("Please generate a report first.");
       return;
     }
-  
+
     const printWindow = window.open("", "_blank");
-  
+
     if (!printWindow) {
       alert("Pop-up blocked. Please allow pop-ups for this site.");
       return;
     }
-  
+
     const safeReport = report
       .replaceAll("&", "&amp;")
       .replaceAll("<", "&lt;")
       .replaceAll(">", "&gt;");
-  
+
     printWindow.document.open();
-  
+
     printWindow.document.write(`
       <!DOCTYPE html>
       <html>
@@ -261,7 +341,7 @@ DEVELOPMENT PLAN
               line-height: 1.5;
               background: white;
             }
-  
+
             .header {
               background: #000;
               color: #fff;
@@ -270,28 +350,28 @@ DEVELOPMENT PLAN
               border-bottom: 5px solid #d90429;
               margin-bottom: 25px;
             }
-  
+
             .header h1 {
               margin: 0;
               font-size: 24px;
             }
-  
+
             .header p {
               margin: 8px 0 0 0;
               font-size: 13px;
             }
-  
+
             .report {
               white-space: pre-wrap;
               font-family: Arial, sans-serif;
               font-size: 12px;
             }
-  
+
             .button-row {
               margin-bottom: 20px;
               text-align: center;
             }
-  
+
             button {
               background: #d90429;
               color: white;
@@ -301,36 +381,36 @@ DEVELOPMENT PLAN
               font-weight: bold;
               cursor: pointer;
             }
-  
+
             @media print {
               .button-row {
                 display: none;
               }
-  
+
               body {
                 padding: 20px;
               }
             }
           </style>
         </head>
-  
+
         <body>
           <div class="button-row">
             <button onclick="window.print()">Save / Print PDF</button>
           </div>
-  
+
           <div class="header">
             <h1>NEXT PHASE FOOTBALL</h1>
             <p>AI-Assisted Player Scout Report</p>
           </div>
-  
+
           <div class="report">${safeReport}</div>
         </body>
       </html>
     `);
-  
+
     printWindow.document.close();
-  
+
     setTimeout(() => {
       printWindow.focus();
       printWindow.print();
@@ -347,7 +427,7 @@ DEVELOPMENT PLAN
         />
 
         <p style={styles.subtitle}>
-          Football player assessment and scout feedback tool.
+          AI-assisted football player assessment and scout feedback tool.
         </p>
       </header>
 
@@ -357,21 +437,34 @@ DEVELOPMENT PLAN
 
           <input
             style={styles.input}
-            placeholder="Player name"
+            list="player-names"
+            placeholder="Select or type player name"
             value={newPlayer.name}
             onChange={(e) =>
               setNewPlayer({ ...newPlayer, name: e.target.value })
             }
           />
 
-          <input
+          <datalist id="player-names">
+            {playerNameOptions.map((name) => (
+              <option key={name} value={name} />
+            ))}
+          </datalist>
+
+          <select
             style={styles.input}
-            placeholder="Age"
             value={newPlayer.age}
             onChange={(e) =>
               setNewPlayer({ ...newPlayer, age: e.target.value })
             }
-          />
+          >
+            <option value="">Select Age Group</option>
+            {ageGroupOptions.map((ageGroup) => (
+              <option key={ageGroup} value={ageGroup}>
+                {ageGroup}
+              </option>
+            ))}
+          </select>
 
           <select
             style={styles.input}
@@ -407,6 +500,82 @@ DEVELOPMENT PLAN
             }
           />
 
+          <div style={styles.kitRow}>
+            <div>
+              <p style={styles.smallLabel}>Kit Colour</p>
+
+              <div style={styles.kitColourRow}>
+                <button
+                  type="button"
+                  style={{
+                    ...styles.kitColourBox,
+                    background: "#ff7a00",
+                    border:
+                      newPlayer.kitColour === "Orange"
+                        ? "3px solid #ffffff"
+                        : "1px solid #333",
+                  }}
+                  onClick={() =>
+                    setNewPlayer({ ...newPlayer, kitColour: "Orange" })
+                  }
+                ></button>
+
+                <button
+                  type="button"
+                  style={{
+                    ...styles.kitColourBox,
+                    background: "#ffd60a",
+                    border:
+                      newPlayer.kitColour === "Yellow"
+                        ? "3px solid #ffffff"
+                        : "1px solid #333",
+                  }}
+                  onClick={() =>
+                    setNewPlayer({ ...newPlayer, kitColour: "Yellow" })
+                  }
+                ></button>
+
+                <button
+                  type="button"
+                  style={{
+                    ...styles.kitColourBox,
+                    background: "#00a651",
+                    border:
+                      newPlayer.kitColour === "Green"
+                        ? "3px solid #ffffff"
+                        : "1px solid #333",
+                  }}
+                  onClick={() =>
+                    setNewPlayer({ ...newPlayer, kitColour: "Green" })
+                  }
+                ></button>
+              </div>
+            </div>
+
+            <div>
+              <p style={styles.smallLabel}>Kit Number</p>
+
+              <select
+                style={{
+                  ...styles.kitNumberBox,
+                  background: getKitBackground(newPlayer.kitColour),
+                  color: getKitTextColour(newPlayer.kitColour),
+                }}
+                value={newPlayer.kitNumber}
+                onChange={(e) =>
+                  setNewPlayer({ ...newPlayer, kitNumber: e.target.value })
+                }
+              >
+                <option value="">#</option>
+                {Array.from({ length: 23 }, (_, i) => i + 1).map((number) => (
+                  <option key={number} value={number}>
+                    {number}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
           <button style={styles.button} onClick={addPlayer}>
             Add Player
           </button>
@@ -431,9 +600,32 @@ DEVELOPMENT PLAN
               }}
             >
               <strong>{player.name}</strong>
+
               <p>
                 Age {player.age} | {player.position} | {player.club}
               </p>
+
+              <div style={styles.playerKitRow}>
+                <span
+                  style={{
+                    ...styles.playerKitDot,
+                    background: getKitBackground(player.kitColour),
+                  }}
+                ></span>
+
+                <span
+                  style={{
+                    ...styles.playerKitNumber,
+                    background: getKitBackground(player.kitColour),
+                    color: getKitTextColour(player.kitColour),
+                  }}
+                >
+                  {player.kitNumber && player.kitNumber !== "Not selected"
+                    ? `#${player.kitNumber}`
+                    : "#"}
+                </span>
+              </div>
+
               <p>Rating: {player.rating ? `${player.rating}/10` : "Pending"}</p>
             </div>
           ))}
@@ -658,6 +850,62 @@ const styles = {
     cursor: "pointer",
     background: "#000000",
     color: "#ffffff",
+  },
+  kitRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: "15px",
+    marginBottom: "15px",
+  },
+  smallLabel: {
+    fontSize: "12px",
+    color: "#aaaaaa",
+    margin: "0 0 6px 0",
+  },
+  kitColourRow: {
+    display: "flex",
+    gap: "8px",
+  },
+  kitColourBox: {
+    width: "34px",
+    height: "34px",
+    borderRadius: "8px",
+    cursor: "pointer",
+    outline: "none",
+  },
+  kitNumberBox: {
+    width: "55px",
+    height: "34px",
+    borderRadius: "8px",
+    border: "1px solid #333",
+    textAlign: "center",
+    fontWeight: "bold",
+    cursor: "pointer",
+    outline: "none",
+  },
+  playerKitRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+    marginTop: "8px",
+  },
+  playerKitDot: {
+    width: "18px",
+    height: "18px",
+    borderRadius: "5px",
+    display: "inline-block",
+    border: "1px solid #ffffff33",
+  },
+  playerKitNumber: {
+    minWidth: "34px",
+    height: "24px",
+    borderRadius: "6px",
+    fontWeight: "bold",
+    fontSize: "12px",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    border: "1px solid #ffffff33",
   },
   ratingSection: {
     background: "#000000",
