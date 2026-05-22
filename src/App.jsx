@@ -1,10 +1,4 @@
-import React, { useEffect, useState } from "react";
-import { createClient } from "@supabase/supabase-js";
-
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+import React, { useState } from "react";
 
 export default function App() {
   const playerNameOptions = [
@@ -116,12 +110,35 @@ export default function App() {
   const [loggedInScout, setLoggedInScout] = useState("");
 
   const [activeSection, setActiveSection] = useState("assessment");
-  const [players, setPlayers] = useState([]);
   const [savedReports, setSavedReports] = useState([]);
   const [selectedReport, setSelectedReport] = useState(null);
+
+  const [players, setPlayers] = useState([
+    {
+      id: 1,
+      name: "Ayob Hussain",
+      age: "U17",
+      position: "GK",
+      club: "AR Elite",
+      kitColour: "Orange",
+      kitNumber: "1",
+      rating: 0,
+      notes: "No assessment completed yet.",
+    },
+    {
+      id: 2,
+      name: "Lincon Newall",
+      age: "U17",
+      position: "CB",
+      club: "AR Elite",
+      kitColour: "Yellow",
+      kitNumber: "2",
+      rating: 0,
+      notes: "No assessment completed yet.",
+    },
+  ]);
+
   const [selectedPlayer, setSelectedPlayer] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [systemMessage, setSystemMessage] = useState("");
 
   const [newPlayer, setNewPlayer] = useState({
     name: "",
@@ -133,6 +150,7 @@ export default function App() {
   });
 
   const [assessment, setAssessment] = useState(defaultAssessment);
+  const [systemMessage, setSystemMessage] = useState("");
 
   const activePlayer = selectedPlayer || players[0] || null;
 
@@ -222,78 +240,6 @@ export default function App() {
 
   const abilityRatings = positionRatingGroups[selectedPositionGroup];
 
-  useEffect(() => {
-    if (!supabaseUrl || !supabaseAnonKey) {
-      setSystemMessage("Supabase environment variables are missing.");
-      setIsLoading(false);
-      return;
-    }
-
-    loadPlayers();
-    loadReports();
-  }, []);
-
-  async function loadPlayers() {
-    setIsLoading(true);
-
-    const { data, error } = await supabase
-      .from("players")
-      .select("*")
-      .order("created_at", { ascending: false });
-
-    if (error) {
-      console.error("Supabase players load error:", error);
-      setSystemMessage("Could not load players from Supabase: " + error.message);
-      setIsLoading(false);
-      return;
-    }
-
-    const mappedPlayers = data.map((player) => ({
-      id: player.id,
-      name: player.name,
-      age: player.age,
-      position: player.position,
-      club: player.club,
-      kitColour: player.kit_colour,
-      kitNumber: player.kit_number,
-      rating: player.rating,
-      notes: player.notes,
-    }));
-
-    setPlayers(mappedPlayers);
-    setIsLoading(false);
-  }
-
-  async function loadReports() {
-    const { data, error } = await supabase
-      .from("reports")
-      .select("*")
-      .order("created_at", { ascending: false });
-
-    if (error) {
-      console.error("Supabase reports load error:", error);
-      setSystemMessage("Could not load reports from Supabase: " + error.message);
-      return;
-    }
-
-    const mappedReports = data.map((report) => ({
-      id: report.id,
-      title: report.title,
-      playerName: report.player_name,
-      age: report.age,
-      position: report.position,
-      club: report.club,
-      kitColour: report.kit_colour,
-      kitNumber: report.kit_number,
-      score: report.score,
-      scoutName: report.scout_name,
-      createdAt: new Date(report.created_at).toLocaleString(),
-      reportText: report.report_text,
-    }));
-
-    setSavedReports(mappedReports);
-  }
-
   function getKitBackground(colour) {
     if (colour === "Orange") return "#ff7a00";
     if (colour === "Yellow") return "#ffd60a";
@@ -321,49 +267,26 @@ export default function App() {
     setIsLoggedIn(true);
   }
 
-  async function addPlayer() {
+  function addPlayer() {
     if (!newPlayer.name || !newPlayer.age || !newPlayer.position) {
       alert("Please add player name, age group and position.");
       return;
     }
 
-    const playerToInsert = {
+    const player = {
+      id: Date.now(),
       name: newPlayer.name,
       age: newPlayer.age,
       position: newPlayer.position,
       club: newPlayer.club || "Not added",
-      kit_colour: newPlayer.kitColour || "Not selected",
-      kit_number: newPlayer.kitNumber || "Not selected",
-      rating: "0",
+      kitColour: newPlayer.kitColour || "Not selected",
+      kitNumber: newPlayer.kitNumber || "Not selected",
+      rating: 0,
       notes: "No assessment completed yet.",
     };
 
-    const { data, error } = await supabase
-      .from("players")
-      .insert([playerToInsert])
-      .select()
-      .single();
-
-    if (error) {
-      console.error("Supabase player insert error:", error);
-      alert("Could not save player to Supabase: " + error.message);
-      return;
-    }
-
-    const savedPlayer = {
-      id: data.id,
-      name: data.name,
-      age: data.age,
-      position: data.position,
-      club: data.club,
-      kitColour: data.kit_colour,
-      kitNumber: data.kit_number,
-      rating: data.rating,
-      notes: data.notes,
-    };
-
-    setPlayers([savedPlayer, ...players]);
-    setSelectedPlayer(savedPlayer);
+    setPlayers([player, ...players]);
+    setSelectedPlayer(player);
 
     setNewPlayer({
       name: "",
@@ -376,7 +299,7 @@ export default function App() {
 
     setAssessment(defaultAssessment);
     setActiveSection("assessment");
-    setSystemMessage("Player saved successfully.");
+    setSystemMessage("Player added locally.");
   }
 
   function calculateAverage() {
@@ -486,7 +409,7 @@ DEVELOPMENT PLAN
 `;
   }
 
-  async function submitAndDownloadPDF() {
+  function submitAndDownloadPDF() {
     if (!activePlayer) {
       alert("Please select or add a player first.");
       return;
@@ -500,58 +423,19 @@ DEVELOPMENT PLAN
 
     const average = calculateAverage();
 
-    const reportToInsert = {
+    const savedReport = {
+      id: Date.now(),
       title: `${activePlayer.name} Report`,
-      player_name: activePlayer.name,
+      playerName: activePlayer.name,
       age: activePlayer.age,
       position: activePlayer.position,
       club: activePlayer.club,
-      kit_colour: activePlayer.kitColour || "Not selected",
-      kit_number: activePlayer.kitNumber || "Not selected",
+      kitColour: activePlayer.kitColour || "Not selected",
+      kitNumber: activePlayer.kitNumber || "Not selected",
       score: average.toFixed(1),
-      scout_name: loggedInScout,
-      report_text: generatedReport,
-    };
-
-    const { data, error } = await supabase
-      .from("reports")
-      .insert([reportToInsert])
-      .select()
-      .single();
-
-    if (error) {
-      console.error("Supabase report insert error:", error);
-      alert("Report generated, but could not save to Supabase: " + error.message);
-      openPDFWindow(generatedReport, activePlayer.name);
-      return;
-    }
-
-    const { error: updateError } = await supabase
-      .from("players")
-      .update({
-        rating: average.toFixed(1),
-        notes: assessment.notes || activePlayer.notes,
-      })
-      .eq("id", activePlayer.id);
-
-    if (updateError) {
-      console.error("Supabase player update error:", updateError);
-      setSystemMessage("Report saved, but player rating update failed: " + updateError.message);
-    }
-
-    const savedReport = {
-      id: data.id,
-      title: data.title,
-      playerName: data.player_name,
-      age: data.age,
-      position: data.position,
-      club: data.club,
-      kitColour: data.kit_colour,
-      kitNumber: data.kit_number,
-      score: data.score,
-      scoutName: data.scout_name,
-      createdAt: new Date(data.created_at).toLocaleString(),
-      reportText: data.report_text,
+      scoutName: loggedInScout,
+      createdAt: new Date().toLocaleString(),
+      reportText: generatedReport,
     };
 
     setSavedReports([savedReport, ...savedReports]);
@@ -571,7 +455,7 @@ DEVELOPMENT PLAN
 
     openPDFWindow(generatedReport, activePlayer.name);
     setActiveSection("reports");
-    setSystemMessage("Report saved successfully.");
+    setSystemMessage("Report saved locally.");
   }
 
   function openPDFWindow(reportText, playerName) {
@@ -943,9 +827,7 @@ DEVELOPMENT PLAN
             <section style={styles.card}>
               <h2 style={styles.cardTitle}>Players</h2>
 
-              {isLoading ? (
-                <p style={styles.emptyText}>Loading players...</p>
-              ) : players.length === 0 ? (
+              {players.length === 0 ? (
                 <p style={styles.emptyText}>
                   No players saved yet. Add your first player.
                 </p>
@@ -971,9 +853,30 @@ DEVELOPMENT PLAN
                       Age {player.age} | {player.position} | {player.club}
                     </p>
 
+                    <div style={styles.playerKitRow}>
+                      <span
+                        style={{
+                          ...styles.playerKitDot,
+                          background: getKitBackground(player.kitColour),
+                        }}
+                      ></span>
+
+                      <span
+                        style={{
+                          ...styles.playerKitNumber,
+                          background: getKitBackground(player.kitColour),
+                          color: getKitTextColour(player.kitColour),
+                        }}
+                      >
+                        {player.kitNumber && player.kitNumber !== "Not selected"
+                          ? `#${player.kitNumber}`
+                          : "#"}
+                      </span>
+                    </div>
+
                     <p>
                       Rating:{" "}
-                      {player.rating && player.rating !== "0"
+                      {player.rating && player.rating !== 0
                         ? `${player.rating}/10`
                         : "Pending"}
                     </p>
@@ -1161,6 +1064,7 @@ const styles = {
     fontFamily: "Arial, sans-serif",
     padding: "20px",
   },
+
   loginPage: {
     minHeight: "100vh",
     background:
@@ -1172,6 +1076,7 @@ const styles = {
     justifyContent: "center",
     padding: "20px",
   },
+
   loginCard: {
     width: "100%",
     maxWidth: "420px",
@@ -1182,6 +1087,7 @@ const styles = {
     boxShadow: "0 0 30px rgba(217, 4, 41, 0.25)",
     textAlign: "center",
   },
+
   loginLogo: {
     width: "210px",
     maxWidth: "100%",
@@ -1189,17 +1095,20 @@ const styles = {
     margin: "0 auto 18px auto",
     display: "block",
   },
+
   loginTitle: {
     margin: "0 0 10px 0",
     fontSize: "28px",
     color: "#ffffff",
   },
+
   loginSubtitle: {
     color: "#cfcfcf",
     fontSize: "14px",
     lineHeight: "1.5",
     marginBottom: "22px",
   },
+
   loginInput: {
     width: "100%",
     boxSizing: "border-box",
@@ -1211,6 +1120,7 @@ const styles = {
     color: "#ffffff",
     outline: "none",
   },
+
   loginButton: {
     width: "100%",
     padding: "13px",
@@ -1222,11 +1132,13 @@ const styles = {
     cursor: "pointer",
     textTransform: "uppercase",
   },
+
   loginFooter: {
     marginTop: "18px",
     fontSize: "12px",
     color: "#888888",
   },
+
   header: {
     background: "linear-gradient(135deg, #000000, #1a1a1a)",
     border: "1px solid #b00020",
@@ -1238,6 +1150,7 @@ const styles = {
     flexDirection: "column",
     alignItems: "center",
   },
+
   logo: {
     width: "220px",
     maxWidth: "100%",
@@ -1245,10 +1158,12 @@ const styles = {
     display: "block",
     margin: "0 auto 12px auto",
   },
+
   subtitle: {
     marginTop: "10px",
     color: "#d1d1d1",
   },
+
   loggedInBox: {
     marginTop: "12px",
     padding: "8px 12px",
@@ -1258,11 +1173,13 @@ const styles = {
     color: "#ffffff",
     fontSize: "13px",
   },
+
   systemMessage: {
     marginTop: "10px",
     fontSize: "12px",
     color: "#aaaaaa",
   },
+
   menu: {
     display: "flex",
     gap: "10px",
@@ -1270,6 +1187,7 @@ const styles = {
     flexWrap: "wrap",
     justifyContent: "center",
   },
+
   menuButton: {
     padding: "11px 16px",
     borderRadius: "999px",
@@ -1281,21 +1199,25 @@ const styles = {
     textTransform: "uppercase",
     fontSize: "12px",
   },
+
   menuButtonActive: {
     background: "#d90429",
     border: "1px solid #d90429",
   },
+
   main: {
     display: "grid",
     gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
     gap: "20px",
   },
+
   card: {
     background: "#111111",
     border: "1px solid #2b2b2b",
     borderRadius: "12px",
     padding: "20px",
   },
+
   cardWide: {
     background: "#111111",
     border: "1px solid #2b2b2b",
@@ -1303,12 +1225,14 @@ const styles = {
     padding: "20px",
     gridColumn: "1 / -1",
   },
+
   cardTitle: {
     color: "#ffffff",
     borderBottom: "2px solid #d90429",
     paddingBottom: "8px",
     marginBottom: "15px",
   },
+
   input: {
     width: "100%",
     boxSizing: "border-box",
@@ -1320,6 +1244,7 @@ const styles = {
     color: "#ffffff",
     outline: "none",
   },
+
   textarea: {
     width: "100%",
     boxSizing: "border-box",
@@ -1333,6 +1258,7 @@ const styles = {
     color: "#ffffff",
     outline: "none",
   },
+
   button: {
     width: "100%",
     padding: "12px",
@@ -1344,6 +1270,7 @@ const styles = {
     cursor: "pointer",
     textTransform: "uppercase",
   },
+
   playerBox: {
     padding: "12px",
     borderRadius: "8px",
@@ -1352,21 +1279,25 @@ const styles = {
     background: "#000000",
     color: "#ffffff",
   },
+
   kitRow: {
     display: "flex",
     alignItems: "center",
     gap: "15px",
     marginBottom: "15px",
   },
+
   smallLabel: {
     fontSize: "12px",
     color: "#aaaaaa",
     margin: "0 0 6px 0",
   },
+
   kitColourRow: {
     display: "flex",
     gap: "8px",
   },
+
   kitColourBox: {
     width: "34px",
     height: "34px",
@@ -1374,6 +1305,7 @@ const styles = {
     cursor: "pointer",
     outline: "none",
   },
+
   kitNumberBox: {
     width: "55px",
     height: "34px",
@@ -1384,6 +1316,34 @@ const styles = {
     cursor: "pointer",
     outline: "none",
   },
+
+  playerKitRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+    marginTop: "8px",
+  },
+
+  playerKitDot: {
+    width: "18px",
+    height: "18px",
+    borderRadius: "5px",
+    display: "inline-block",
+    border: "1px solid #ffffff33",
+  },
+
+  playerKitNumber: {
+    minWidth: "34px",
+    height: "24px",
+    borderRadius: "6px",
+    fontWeight: "bold",
+    fontSize: "12px",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    border: "1px solid #ffffff33",
+  },
+
   ratingSection: {
     background: "#000000",
     border: "1px solid #2b2b2b",
@@ -1391,73 +1351,87 @@ const styles = {
     padding: "15px",
     marginBottom: "18px",
   },
+
   sectionTitle: {
     color: "#ffffff",
     margin: "0 0 6px 0",
     fontSize: "18px",
   },
+
   sectionText: {
     color: "#aaaaaa",
     fontSize: "14px",
     marginTop: "0",
     marginBottom: "15px",
   },
+
   ratingGrid: {
     display: "grid",
     gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
     gap: "14px",
   },
+
   ratingBox: {
     background: "#111111",
     border: "1px solid #333333",
     borderRadius: "10px",
     padding: "12px",
   },
+
   slider: {
     width: "100%",
     marginBottom: "15px",
     accentColor: "#d90429",
   },
+
   emptyText: {
     color: "#aaaaaa",
   },
+
   reportLibraryGrid: {
     display: "grid",
     gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
     gap: "15px",
   },
+
   reportCard: {
     background: "#000000",
     border: "1px solid #333333",
     borderRadius: "12px",
     padding: "16px",
   },
+
   reportCardTitle: {
     margin: "0 0 8px 0",
     color: "#ffffff",
     fontSize: "18px",
   },
+
   reportMeta: {
     margin: "4px 0",
     color: "#cccccc",
     fontSize: "13px",
   },
+
   reportScore: {
     margin: "8px 0",
     color: "#ffffff",
     fontWeight: "bold",
     fontSize: "14px",
   },
+
   reportDate: {
     margin: "4px 0",
     color: "#888888",
     fontSize: "12px",
   },
+
   reportButtonRow: {
     display: "grid",
     gridTemplateColumns: "1fr 1fr",
     gap: "8px",
   },
+
   smallButton: {
     padding: "10px",
     borderRadius: "8px",
@@ -1468,6 +1442,7 @@ const styles = {
     cursor: "pointer",
     fontSize: "12px",
   },
+
   smallButtonLight: {
     padding: "10px",
     borderRadius: "8px",
@@ -1478,6 +1453,7 @@ const styles = {
     cursor: "pointer",
     fontSize: "12px",
   },
+
   reportViewer: {
     marginTop: "20px",
     background: "#000000",
@@ -1485,6 +1461,7 @@ const styles = {
     borderRadius: "12px",
     padding: "16px",
   },
+
   reportPreview: {
     whiteSpace: "pre-wrap",
     lineHeight: "1.5",
